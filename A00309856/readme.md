@@ -4,14 +4,15 @@
 ### Estudiantes: 
 **Ray Torres - A00309856**
 
-**URL de github: //github.com/GeorgeArturo/so-exam3**
+**URL de github: //www.github.com/RaayTorres/so-exam3**
 
 ### Procedimiento
 
 * **Instrucciones para la configuración del cliente**
 
-Lo primero que se hizo para la instalación del cliente fue:
+Para configurar el cliente se realizaron los siguientes pasos:
 
+primero:
 ``` 
 echo '[sensu]
 name=sensu
