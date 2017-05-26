@@ -8,11 +8,11 @@
 
 ### Procedimiento
 
-* **Instrucciones para la configuración del cliente**
+* ** Configuración del cliente **
 
 Para configurar el cliente se realizaron los siguientes pasos:
 
-primero:
+primero se creo el archivo de configuración de sensu:
 ``` 
 echo '[sensu]
 name=sensu
@@ -22,30 +22,38 @@ enabled=1' | sudo tee /etc/yum.repos.d/sensu.repo
 
 ```
 
-Luego se instalo sensu mediante los siguientes comandos:
+posteriormente se instalo sensu y su plugin mediante los siguientes comandos:
 
 ```
 yum install sensu -y
 sensu-install -p sensu-plugin
 ```
 
-El servicio del cliente se inicia mediante el siguiente comando:
+se inicia el servicio del sensu del cliente:
 
 ```
 service sensu-client start
 ```
-El servicio de httpd se instalo mediante el siguiente comando
+por ultimo se instalo el servicio httpd por medio del comando:
 
 ```
 yum install httpd -y
 ```
 
-* Para la parte de la configuración de rabbitmq se hizo lo siguiente 
+y se inicio el servicio httpd por medio del comando:
 
+```
+systemctl start httpd.service
+```
+
+
+* ** Configuración rabbit MQ del cliente**
+
+Vamos al archivo de configuracion de sensu ubicado en la siguiente direccion:
 ```
 cd /etc/sensu/conf.d
 ```
-Una vez aqui se creo un archivo tipo json (client.json) con la siguiente información
+Dentro  se crean dos archivos json (cliente.json) y (rabbitmq.json)
 
 ```
 {
@@ -56,11 +64,7 @@ Una vez aqui se creo un archivo tipo json (client.json) con la siguiente informa
   }
 }
 
-```
 
-Luego se creo otro archivo tipo json (rabbitmq.json) con la siguiente información:
-
-```
 {
   "rabbitmq": {
     "host": "192.168.57.3",
@@ -75,14 +79,12 @@ Luego se creo otro archivo tipo json (rabbitmq.json) con la siguiente informaci�
 
 ```
 
-Finalmente se instalaron algunos plugins para el correcto funcionamiento, para esto lo que se hizo fue:
+Finalmente se instalaron algunos plugins necesarios para el correcto funcionamiento del daemon:
 
 ```
-cd /etc/sensu/plugins
+vim /etc/sensu/plugins/check-apache.rb
 ```
-
-una vez en esta direccion se creo un archivo ruby (check-apache.rb) con la siguiente información
-
+Con la siguiente informacion:
 ```
 #!/usr/bin/env ruby
 
@@ -101,10 +103,9 @@ end
 
 ```
 
-* **Instrucciones para la configuración del servidor**
+* ** Configuración del servidor**
 
-Lo primero que se hizo para la instalación del servidor fue:
-
+La instalacion del servivor es igual a la del cliente hasta la instalacion del sensu:
 
 ```
 echo '[sensu]
@@ -114,11 +115,13 @@ gpgcheck=0
 enabled=1' | sudo tee /etc/yum.repos.d/sensu.repo
 ```
 
-Se realizo la instalación de sensu mediante los siguientes comandos 
-
 ```
 yum install sensu -y
 sensu-install -p sensu-plugin
+```
+Adcionalmente se instalaron plugins y servicios como:
+
+```
 sensu-install -p sensu-plugins-slack
 su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm'
 ```
@@ -144,7 +147,7 @@ Se instalo socat
 yum install socat -y
 ```
 
-* Configuración del servicio de rabbitmq
+* ** Configuración rabbit MQ del servidor**
 
 ```
 su -c 'rpm -Uvh http://www.rabbitmq.com/releases/rabbitmq-server/v3.6.9/rabbitmq-server-3.6.9-1.el7.noarch.rpm'
@@ -157,7 +160,7 @@ chown -R rabbitmq:rabbitmq /var/lib/rabbitmq
 
 ```
 
-A continuación para probar el funcionamiento de rabbitmq se configura un usuario
+ se configura un usuario para probar el funcionamiento de rabbitmq
 
 ```
 rabbitmqctl add_user test test
@@ -166,13 +169,13 @@ rabbitmqctl set_permissions -p / test ".*" ".*" ".*"
 
 ```
 
-* A continuación como fue el proceso de configuración de uchiwa
+* se instala uchiwa por medio del comando
 
 ```
 yum install uchiwa -y
 ```
 
-Para poder utilizar estos servicios es necesario abrir los siguientes puertos:
+se realiza la configuracion de los puertos a usar:
 
 ```
 firewall-cmd --zone=public --add-port=5672/tcp --permanent
@@ -180,9 +183,7 @@ firewall-cmd --zone=public --add-port=15672/tcp --permanent
 firewall-cmd --zone=public --add-port=3000/tcp --permanent
 firewall-cmd --reload
 ```
-
-Finalmente se reinician los servicios
-
+y se reinician los servicios
 ```
 service sensu-server restart
 service sensu-api restart
@@ -190,7 +191,7 @@ service uchiwa restart
 
 ```
 
-**A continuación se muestra una prueba del funcionamiento de rabbitmq y de sensu**
+** pruebas de  funcionamiento  rabbitmq y uchiwa**
 
 * Prueba de funcionamiento de Rabbitmq
 
@@ -223,27 +224,25 @@ A continuación se muestra la generación de una alerta por parte de uchiwa cuan
 
 **A continuación se muestra los pasos para la configuración y la instalación del stack de ELK**
 
-El primer paso es instalar el openjdk de Java, para esto se utilizo el siguiente comando
+se instalo el openjdk de Java
 
 ```
 yum install java-1.8.0-openjdk.x86_64
 ```
 * Elasticsearch
 
-Despues de haber descargado el openjdk se procede a descargar e instalar la llave publica de elasticsearch
+se descarga e instala la llave publica de elasticsearch
 
 ```
 rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
 
 ```
 
-Luego se crea un archivo con el repositorio de elasticsearch, para eso primero ejecutamos el siguiente comando
+Para poder instalar Elasticsearch se debe crear un archivo de configuracion de Elasticsearch  que contenga el repositorio  con la siguiente informacion
 
 ```
 vi /etc/yum.repos.d/elasticsearch.repo
 ```
-Una vez en el editor de texto, se pone la siguiente información
-
 
 ```
 [elasticsearch-5.x]
@@ -256,7 +255,7 @@ autorefresh=1
 type=rpm-md
 ```
 
-Una vez este listo el repositorio se instala elasticsearch
+se instala elasticsearch por medio del comando
 
 ```
 yum install elasticsearch -y
@@ -264,13 +263,11 @@ yum install elasticsearch -y
 
 * Logstash
 
-Primero se crea un archivo que contenga el repositorio de logstash
+Para poder instalar logstash se debe crear un archivo de configuracion de logstash  que contenga el repositorio  con la siguiente informacion
 
 ```
 vi /etc/yum.repos.d/logstash.repo
 ```
-
-Una vez en el editor se pone la siguiente información
 
 ```
 [logstash-5.x]
@@ -284,7 +281,7 @@ type=rpm-md
 
 ```
 
-finalmente se instala logstash
+se instala logstash
 
 ```
 yum install logstash -y
@@ -292,14 +289,11 @@ yum install logstash -y
 
 * KIBANA
 
-Primero se crea un archivo que contenga el repositorio de kibana
+Para poder instalar kibana se debe crear un archivo de configuracion de kibana  que contenga el repositorio  con la siguiente informacion
 
 ```
 vi /etc/yum.repos.d/kibana.repo
 ```
-
-Una vez en el editor se pone la siguiente información
-
 ```
 [kibana-5.x]
 name=Kibana repository for 5.x packages
@@ -311,7 +305,7 @@ autorefresh=1
 type=rpm-md
 ```
 
-finalmente se instala kibana
+se instala kibana
 
 ```
 yum install kibana -y
@@ -319,19 +313,11 @@ yum install kibana -y
 
 * Instalación de filebeat 
 
-Primero se descar e instala la llave publica mediante el siguiente comando
+Para poder instalar filebeat se debe crear un archivo de configuracion de filebeat  que contenga el repositorio  con la siguiente informacion
 
 ```
-sudo rpm --import https://packages.elastic.co/GPG-KEY-elasticsearch
+vi /etc/yum.repos.d/filebeat.repo
 ```
-
-Una vez instalada esta llave publica se crea un archivo que contenga el repositorio de filebeat
-
-```
-vi /etc/yum.repos.d/elastic.repo
-```
-
-En el editor se pone la siguiente información
 
 ```
 [elastic-5.x]
@@ -344,7 +330,7 @@ autorefresh=1
 type=rpm-md
 ```
 
-finalmente se instala filebeat mediante el siguiente comando:
+se instala filebeat mediante el siguiente comando:
 
 ```
 sudo yum install filebeat -y
